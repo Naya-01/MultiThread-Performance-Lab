@@ -9,13 +9,11 @@
 #define TOTAL_ELEMENTS 8192
 #define N BUFFER_SIZE
 #define NUM_CONSUMERS 5
-#define NUM_PRODUCERS 4
+#define NUM_PRODUCERS 5
 
 int buffer[BUFFER_SIZE];
 int produce_ptr = 0;
 int consume_ptr = 0;
-int produced_count = 0;
-int consumed_count = 0;
 
 pthread_mutex_t mutex;
 sem_t empty;
@@ -37,7 +35,8 @@ int remove_item(int *item) {
 
 void* producer(void* arg) {
     int item;
-    while (produced_count < TOTAL_ELEMENTS) {
+    int count = 0;
+    while (count < (TOTAL_ELEMENTS / NUM_PRODUCERS)) {
         item = rand(); 
 
         for (int i = 0; i < 10000; i++);
@@ -45,11 +44,8 @@ void* producer(void* arg) {
         sem_wait(&empty);
         pthread_mutex_lock(&mutex);
 
-        if (insert_item(item) == -1) {
-            fprintf(stderr, "Producer error\n");
-        } else {
-            produced_count++;
-        }
+        insert_item(item);
+        count++;
 
         pthread_mutex_unlock(&mutex);
         sem_post(&full);
@@ -59,17 +55,15 @@ void* producer(void* arg) {
 
 void* consumer(void* arg) {
     int item;
-    while (consumed_count < TOTAL_ELEMENTS) {
+    int count = 0;
+    while (count < (TOTAL_ELEMENTS / NUM_CONSUMERS)) {
         for (int i = 0; i < 10000; i++);
 
         sem_wait(&full);
         pthread_mutex_lock(&mutex);
 
-        if (remove_item(&item) == -1) {
-            fprintf(stderr, "Consumer error\n");
-        } else {
-            consumed_count++;
-        }
+        remove_item(&item);
+        count++;
 
         pthread_mutex_unlock(&mutex);
         sem_post(&empty);
