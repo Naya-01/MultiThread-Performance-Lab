@@ -82,27 +82,39 @@ int main(int argc, char *argv[]) {
     // Initialiser les mutex
     for (int i = 0; i < num_philosophers; i++) {
         err = pthread_mutex_init(&forks[i], NULL);
-         if(err!=0) perror("pthread_mutex_init");
+        if(err!=0){
+            perror("pthread_mutex_init");
+            return 1;
+        }
     }
 
     // Créer les threads
     for (int i = 0; i < num_philosophers; i++) {
         philosopher_numbers[i] = i;
         err = pthread_create(&threads[i], NULL, philosopher, &philosopher_numbers[i]);
-        if(err!=0) perror("pthread_create");
+        if(err!=0){
+            perror("pthread_create");
+            return 1;
+        }
     }
 
     // Attendre les threads
     for (int i = 0; i < num_philosophers; i++) {
         err = pthread_join(threads[i], NULL);
-        if(err!=0) perror("pthread_join");
+        if(err!=0){
+            perror("pthread_join");
+            return 1;
+        }
         
     }
 
     // Nettoyer les mutex
     for (int i = 0; i < num_philosophers; i++) {
         err = pthread_mutex_destroy(&forks[i]);
-        if(err!=0) perror("pthread_mutex_destroy");
+        if(err!=0){
+            perror("pthread_mutex_destroy");
+            return 1;
+        }
     }
 
     free(forks);
