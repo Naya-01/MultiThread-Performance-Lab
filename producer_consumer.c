@@ -72,16 +72,16 @@ void* consumer(void* arg) {
 }
 
 int main(int argc, char* argv[]) {
-    // if (argc != 3) {
-    //     fprintf(stderr, "Usage: %s <num_producers> <num_consumers>\n", argv[0]);
-    //     return 1;
-    // }
+    if (argc != 3) {
+        fprintf(stderr, "Usage: %s <num_producers> <num_consumers>\n", argv[0]);
+        return 1;
+    }
 
-    // int num_producers = atoi(argv[1]);
-    // int num_consumers = atoi(argv[2]);
+    int num_producers = atoi(argv[1]);
+    int num_consumers = atoi(argv[2]);
 
-    int num_producers = NUM_PRODUCERS;
-    int num_consumers = NUM_CONSUMERS;
+    // int num_producers = NUM_PRODUCERS;
+    // int num_consumers = NUM_CONSUMERS;
 
     pthread_t producers[num_producers];
     pthread_t consumers[num_consumers];

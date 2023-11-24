@@ -93,16 +93,16 @@ void *reader(void *arg)
 
 int main(int argc, char const *argv[])
 {
-    // if (argc < 3) {
-    //     fprintf(stderr, "Usage: %s nombre_ecrivains nombre_lecteurs\n", argv[0]);
-    //     return 1;
-    // }
+    if (argc < 3) {
+        fprintf(stderr, "Usage: %s nombre_ecrivains nombre_lecteurs\n", argv[0]);
+        return 1;
+    }
 
-    // int nb_ecrivains = atoi(argv[1]);
-    // int nb_lecteurs = atoi(argv[2]);
+    int nb_ecrivains = atoi(argv[1]);
+    int nb_lecteurs = atoi(argv[2]);
 
-    int nb_ecrivains = NB_WRITER;
-    int nb_lecteurs = NB_READER;
+    // int nb_ecrivains = NB_WRITER;
+    // int nb_lecteurs = NB_READER;
 
     pthread_mutex_init(&mutex, NULL);
     pthread_mutex_init(&ecrivain, NULL);
