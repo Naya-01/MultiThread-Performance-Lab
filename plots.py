@@ -26,6 +26,6 @@ def plot_data(program_name, data):
 
 
 for program in ["philosophers", "producer_consumer", "writer_reader"]:
-    data = read_data(program + "_performance.csv")
+    data = read_data("./data/" + program + "_performance.csv")
     plot_data(program, data)
 

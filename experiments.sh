@@ -23,7 +23,7 @@ run_and_measure() {
 }
 
 for program in "philosophers" "producer_consumer" "writer_reader"; do
-    echo "threads, duration_ms" > "${program}_performance.csv"
+    echo "threads, duration_ms" > "./data/${program}_performance.csv"
     for count in "${thread_counts[@]}"; do
         for i in {1..3}; do
             run_and_measure $program $count
