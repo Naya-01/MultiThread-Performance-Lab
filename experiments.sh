@@ -30,3 +30,5 @@ for program in "philosophers" "producer_consumer" "writer_reader"; do
         done
     done
 done
+
+python3 "plots.py"

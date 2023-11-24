@@ -1,6 +1,25 @@
 # MultiThread-Performance-Lab
 Programmation multi-threadée et évaluation de performances 
 
-to compile :  
+## First Time   
 
-``gcc -o writer_reader "writer_reader.c -lpthread -lrt``
+``make``
+
+python3 -m venv ./.venv
+
+source ./.venv/bin/activate
+
+pip install numpy 
+
+pip install matplotlib
+
+## Run perf
+
+`./experiments.sh`
+
+
+### For plots
+
+`python3 plots.py`
+
+
