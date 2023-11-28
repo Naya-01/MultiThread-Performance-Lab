@@ -12,26 +12,13 @@ int num_philosophers;
 
 
 void lock_forks(int first_fork, int second_fork) {
-    if(pthread_mutex_lock(&forks[first_fork]) != 0){
-        fprintf(stderr, "Error locking  first fork\\n");
-        exit(EXIT_FAILURE);
-    }
-    if(pthread_mutex_lock(&forks[second_fork]) != 0){
-        fprintf(stderr, "Error locking  second fork\\n");
-        exit(EXIT_FAILURE); 
-    }
+    pthread_mutex_lock(&forks[first_fork]);
+    pthread_mutex_lock(&forks[second_fork]);
 }
 
 void unlock_forks(int first_fork, int second_fork) {
-    if(pthread_mutex_unlock(&forks[second_fork]) != 0){
-        fprintf(stderr, "Error unlocking  second fork\\n");
-        exit(EXIT_FAILURE);
-    }
-
-    if(pthread_mutex_unlock(&forks[first_fork]) != 0){
-        fprintf(stderr, "Error unlocking  first fork\\n");
-        exit(EXIT_FAILURE);
-    }
+    pthread_mutex_unlock(&forks[second_fork]);
+    pthread_mutex_unlock(&forks[first_fork]);
 }
 
 void* philosopher(void* num) {
@@ -48,11 +35,7 @@ void* philosopher(void* num) {
     }
 
     for (int i = 0; i < NUM_CYCLES; i++) {
-        printf("Philosophe %d pense\n", id);
         lock_forks(first_fork, second_fork);
-        printf("Philosophe %d commence à manger\n", id);
-
-        printf("Philosophe %d a fini de manger et repose les fourchettes\n", id);
         unlock_forks(first_fork, second_fork);
 
     }
@@ -73,7 +56,6 @@ int main(int argc, char *argv[]) {
     forks = malloc(num_philosophers * sizeof(pthread_mutex_t));
     
     if (!forks) {
-        fprintf(stderr, "Failed to allocate memory for forks \n");
         exit(EXIT_FAILURE);
     }
 
@@ -83,7 +65,6 @@ int main(int argc, char *argv[]) {
     for (int i = 0; i < num_philosophers; i++) {
         err = pthread_mutex_init(&forks[i], NULL);
         if(err!=0){
-            perror("pthread_mutex_init");
             return 1;
         }
     }
@@ -93,7 +74,6 @@ int main(int argc, char *argv[]) {
         philosopher_numbers[i] = i;
         err = pthread_create(&threads[i], NULL, philosopher, &philosopher_numbers[i]);
         if(err!=0){
-            perror("pthread_create");
             return 1;
         }
     }
@@ -102,7 +82,6 @@ int main(int argc, char *argv[]) {
     for (int i = 0; i < num_philosophers; i++) {
         err = pthread_join(threads[i], NULL);
         if(err!=0){
-            perror("pthread_join");
             return 1;
         }
         
@@ -112,7 +91,6 @@ int main(int argc, char *argv[]) {
     for (int i = 0; i < num_philosophers; i++) {
         err = pthread_mutex_destroy(&forks[i]);
         if(err!=0){
-            perror("pthread_mutex_destroy");
             return 1;
         }
     }
