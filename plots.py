@@ -16,6 +16,8 @@ def plot_data(program_name, data):
 
     plt.errorbar(threads, means, yerr=std_devs, fmt='o-', capsize=5, label=program_name)
     plt.xlabel('Nombre de Threads')
+    plt.xscale('log', base=2)
+    plt.xticks(threads, threads) 
     plt.ylabel('Temps d\'exécution (ms)')
     plt.title('Performance de ' + program_name)
     plt.ylim(bottom=0)
