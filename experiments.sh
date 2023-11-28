@@ -19,7 +19,7 @@ run_and_measure() {
     end_time=$(date +%s%N)
 
     duration=$((($end_time - $start_time) / 1000000)) # millisecondes
-    echo "$thread_count, $duration" >> "${program}_performance.csv"
+    echo "$thread_count, $duration" >> "./data/${program}_performance.csv"
 }
 
 for program in "philosophers" "producer_consumer" "writer_reader"; do
@@ -29,6 +29,7 @@ for program in "philosophers" "producer_consumer" "writer_reader"; do
             run_and_measure $program $count
         done
     done
+    cat "./data/${program}_performance.csv"
 done
 
 python3 "plots.py"
