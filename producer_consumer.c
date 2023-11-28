@@ -73,7 +73,6 @@ void* consumer(void* arg) {
 
 int main(int argc, char* argv[]) {
     if (argc != 3) {
-        fprintf(stderr, "Usage: %s <num_producers> <num_consumers>\n", argv[0]);
         return 1;
     }
 

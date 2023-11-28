@@ -94,7 +94,6 @@ void *reader(void *arg)
 int main(int argc, char const *argv[])
 {
     if (argc < 3) {
-        fprintf(stderr, "Usage: %s nombre_ecrivains nombre_lecteurs\n", argv[0]);
         return 1;
     }
 

@@ -64,8 +64,8 @@ int main(int argc, char *argv[]) {
         return 1;
     }
 
-    // num_philosophers = atoi(argv[1]);
-    num_philosophers = NUM_PHILOSOPHERS;
+    num_philosophers = atoi(argv[1]);
+    // num_philosophers = NUM_PHILOSOPHERS;
 
     pthread_t threads[num_philosophers];
     int philosopher_numbers[num_philosophers];
