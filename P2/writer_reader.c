@@ -10,9 +10,9 @@
 #define NB_READER 1
 #define NB_WRITER 10
 
-pthread_mutex_t mutex; // mutex lecteur
-pthread_mutex_t ecrivain;
-pthread_mutex_t bReader; // bloque les reader
+volatile int mutex = 0;
+volatile int ecrivain = 0;
+volatile int bReader = 0;
 
 sem_t db; // accès à la db
 sem_t rsem;
@@ -20,21 +20,40 @@ sem_t rsem;
 int readcount = 0; // nombre de readers
 int writecount = 0;
 
+void lock(volatile int *var) {
+    int prev_value;
+    do {
+        __asm__ __volatile__(
+            "xchg %0, %1\n\t"
+            : "=r"(prev_value), "+m"(*var)
+            : "0"(1)
+            :
+        );
+    } while (prev_value == 1);
+}
+
+void unlock(volatile int *var) {
+    __asm__ __volatile__(
+        "movl $0, %0\n\t"
+        : "+m"(*var)
+        :
+        :
+    );
+}
+
 void read_database()
 {
-    printf("Lecteur %ld lit la base de données\n", pthread_self());
 }
 
 void write_database()
 {
-    printf("Écrivain %ld écrit dans la base de données\n", pthread_self());
 }
 
 void *writer(void *arg)
 {
     for (int i = 0; i < WRITING; i++)
     {
-        pthread_mutex_lock(&ecrivain);
+        lock(&ecrivain);
 
         writecount++;
         if (writecount == 1)
@@ -42,20 +61,20 @@ void *writer(void *arg)
             sem_wait(&rsem);
         }
 
-        pthread_mutex_unlock(&ecrivain);
+        unlock(&ecrivain);
 
         sem_wait(&db);
         write_database();
         sem_post(&db);
 
-        pthread_mutex_lock(&ecrivain);
+        lock(&ecrivain);
         writecount--;
 
         if (writecount == 0)
         {
             sem_post(&rsem);
         }
-        pthread_mutex_unlock(&ecrivain);
+        unlock(&ecrivain);
     }
     return NULL;
 }
@@ -64,29 +83,29 @@ void *reader(void *arg)
 {
     for (int i = 0; i < READING; i++)
     {
-        pthread_mutex_lock(&bReader);
+        lock(&bReader);
 
         sem_wait(&rsem);
 
-        pthread_mutex_lock(&mutex);
+        lock(&mutex);
         readcount++;
         if (readcount == 1)
         {
             sem_wait(&db);
         }
-        pthread_mutex_unlock(&mutex);
+        unlock(&mutex);
         sem_post(&rsem);
 
-        pthread_mutex_unlock(&bReader);
+        unlock(&bReader);
         read_database();
-        pthread_mutex_lock(&mutex);
+        lock(&mutex);
 
         readcount--;
         if (readcount == 0)
         {
             sem_post(&db);
         }
-        pthread_mutex_unlock(&mutex);
+        unlock(&mutex);
     }
     return NULL;
 }
@@ -102,10 +121,7 @@ int main(int argc, char const *argv[])
 
     // int nb_ecrivains = NB_WRITER;
     // int nb_lecteurs = NB_READER;
-
-    pthread_mutex_init(&mutex, NULL);
-    pthread_mutex_init(&ecrivain, NULL);
-    pthread_mutex_init(&bReader, NULL);
+    mutex = 0;
     sem_init(&db, 0, 1);
     sem_init(&rsem, 0, 1);
 
@@ -118,7 +134,6 @@ int main(int argc, char const *argv[])
     {
         err = pthread_create(&threads_ecrivains[i], NULL, writer, NULL);
         if(err!=0){
-            perror("pthread_create producers");
             return 1;
         }
     }
@@ -126,7 +141,6 @@ int main(int argc, char const *argv[])
     {
         err = pthread_create(&threads_lecteurs[i], NULL, reader, NULL);
         if(err!=0){
-            perror("pthread_create producers");
             return 1;
         }
     }
@@ -135,7 +149,6 @@ int main(int argc, char const *argv[])
     {
         err = pthread_join(threads_ecrivains[i], NULL);
         if(err!=0){
-            perror("pthread_create producers");
             return 1;
         }
     }
@@ -143,14 +156,10 @@ int main(int argc, char const *argv[])
     {
         err = pthread_join(threads_lecteurs[i], NULL);
         if(err!=0){
-            perror("pthread_create producers");
             return 1;
         }
     }
 
-    pthread_mutex_destroy(&mutex);
-    pthread_mutex_destroy(&ecrivain);
-    pthread_mutex_destroy(&bReader);
     sem_destroy(&db);
     sem_destroy(&rsem);
 

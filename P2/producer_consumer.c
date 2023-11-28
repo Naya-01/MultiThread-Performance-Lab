@@ -15,20 +15,40 @@ int buffer[BUFFER_SIZE];
 int produce_ptr = 0;
 int consume_ptr = 0;
 
-pthread_mutex_t mutex;
+volatile int mutex = 0;
 sem_t empty;
 sem_t full;
 
+
+void lock() {
+    int prev_value;
+    do {
+        __asm__ __volatile__(
+            "xchg %0, %1\n\t"
+            : "=r"(prev_value), "+m"(mutex)
+            : "0"(1)
+            :
+        );
+    } while (prev_value == 1);
+}
+
+void unlock() {
+    __asm__ __volatile__(
+        "movl $0, %0\n\t"
+        : "+m"(mutex)
+        :
+        :
+    );
+}
+
 int insert_item(int item) {
     buffer[produce_ptr] = item;
-    printf("Producer produced item %d at position %d \n", item, produce_ptr);
     produce_ptr = (produce_ptr + 1) % BUFFER_SIZE;
     return 0;
 }
 
 int remove_item(int *item) {
     *item = buffer[consume_ptr];
-    printf("Consumer consumed item %d from position %d \n", *item, consume_ptr);
     consume_ptr = (consume_ptr + 1) % BUFFER_SIZE;
     return 0;
 }
@@ -42,12 +62,12 @@ void* producer(void* arg) {
         for (int i = 0; i < 10000; i++);
 
         sem_wait(&empty);
-        pthread_mutex_lock(&mutex);
+        lock();
 
         insert_item(item);
         count++;
 
-        pthread_mutex_unlock(&mutex);
+        unlock();
         sem_post(&full);
     }
     return NULL;
@@ -60,12 +80,12 @@ void* consumer(void* arg) {
         for (int i = 0; i < 10000; i++);
 
         sem_wait(&full);
-        pthread_mutex_lock(&mutex);
+        lock();
 
         remove_item(&item);
         count++;
 
-        pthread_mutex_unlock(&mutex);
+        unlock();
         sem_post(&empty);
     }
     return NULL;
@@ -85,7 +105,7 @@ int main(int argc, char* argv[]) {
     pthread_t producers[num_producers];
     pthread_t consumers[num_consumers];
 
-    pthread_mutex_init(&mutex, NULL);
+    mutex = 0;
     sem_init(&empty, 0, N);
     sem_init(&full, 0, 0);
 
@@ -95,7 +115,6 @@ int main(int argc, char* argv[]) {
     for (int i = 0; i < num_producers; i++) {
         err = pthread_create(&producers[i], NULL, producer, NULL);
         if(err!=0){
-            perror("pthread_create producers");
             return 1;
         }
     }
@@ -103,7 +122,6 @@ int main(int argc, char* argv[]) {
     for (int i = 0; i < num_consumers; i++) {
         err = pthread_create(&consumers[i], NULL, consumer, NULL);
         if(err!=0){
-            perror("pthread_create consumer");
             return 1;
         }
     }
@@ -111,7 +129,6 @@ int main(int argc, char* argv[]) {
     for (int i = 0; i < num_producers; i++) {
         err = pthread_join(producers[i], NULL);
         if(err!=0){
-            perror("pthread_join producer");
             return 1;
         }
     }
@@ -119,12 +136,10 @@ int main(int argc, char* argv[]) {
     for (int i = 0; i < num_consumers; i++) {
         err = pthread_join(consumers[i], NULL);
         if(err!=0){
-            perror("pthread_join consumer");
             return 1;
         }
     }
 
-    pthread_mutex_destroy(&mutex);
     sem_destroy(&empty);
     sem_destroy(&full);
 

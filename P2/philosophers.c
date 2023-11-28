@@ -3,31 +3,31 @@
 #include <stdlib.h>
 #include <unistd.h>
 
-#define NUM_CYCLES 10000000
+#define NUM_CYCLES 10
 #define NUM_PHILOSOPHERS 5
 
 volatile int *forks;
 int num_philosophers;
 
 
-static inline void lock(int fork) {
+void lock(int fork) {
     int prev_value;
     do {
         __asm__ __volatile__(
             "xchg %0, %1\n\t"
             : "=r"(prev_value), "+m"(forks[fork])
             : "0"(1)
-            : "memory", "cc"
+            :
         );
     } while (prev_value == 1);
 }
 
-static inline void unlock(int fork) {
+void unlock(int fork) {
     __asm__ __volatile__(
         "movl $0, %0\n\t"
         : "+m"(forks[fork])
         :
-        : "memory", "cc"
+        :
     );
 }
 
@@ -99,14 +99,6 @@ int main(int argc, char *argv[]) {
             return 1;
         }
         
-    }
-
-    // Nettoyer les mutex
-    for (int i = 0; i < num_philosophers; i++) {
-        err = pthread_mutex_destroy(&forks[i]);
-        if(err!=0){
-            return 1;
-        }
     }
 
     free(forks);
