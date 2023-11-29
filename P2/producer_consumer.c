@@ -14,6 +14,8 @@
 int buffer[BUFFER_SIZE];
 int produce_ptr = 0;
 int consume_ptr = 0;
+int num_consumers;
+int num_producers;
 
 volatile int mutex = 0;
 sem_t empty;
@@ -56,7 +58,7 @@ int remove_item(int *item) {
 void* producer(void* arg) {
     int item;
     int count = 0;
-    while (count < (TOTAL_ELEMENTS / NUM_PRODUCERS)) {
+    while (count < (TOTAL_ELEMENTS / num_producers)) {
         item = rand(); 
 
         for (int i = 0; i < 10000; i++);
@@ -76,7 +78,7 @@ void* producer(void* arg) {
 void* consumer(void* arg) {
     int item;
     int count = 0;
-    while (count < (TOTAL_ELEMENTS / NUM_CONSUMERS)) {
+    while (count < (TOTAL_ELEMENTS / num_consumers)) {
         for (int i = 0; i < 10000; i++);
 
         sem_wait(&full);
@@ -96,8 +98,8 @@ int main(int argc, char* argv[]) {
         return 1;
     }
 
-    int num_producers = atoi(argv[1]);
-    int num_consumers = atoi(argv[2]);
+    num_producers = atoi(argv[1]);
+    num_consumers = atoi(argv[2]);
 
     // int num_producers = NUM_PRODUCERS;
     // int num_consumers = NUM_CONSUMERS;
