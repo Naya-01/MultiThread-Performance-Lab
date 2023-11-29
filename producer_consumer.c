@@ -1,4 +1,3 @@
-
 #include <pthread.h>
 #include <semaphore.h>
 #include <stdio.h>
@@ -36,7 +35,8 @@ int remove_item(int *item) {
 void* producer(void* arg) {
     int item;
     int count = 0;
-    while (count < (TOTAL_ELEMENTS / num_producers)) {
+    int max_items = *(int*)arg;
+    while (count < max_items) {
         item = rand(); 
 
         for (int i = 0; i < 10000; i++);
@@ -56,7 +56,8 @@ void* producer(void* arg) {
 void* consumer(void* arg) {
     int item;
     int count = 0;
-    while (count < (TOTAL_ELEMENTS / num_consumers)) {
+    int max_items = *(int*)arg;
+    while (count < max_items) {
         for (int i = 0; i < 10000; i++);
 
         sem_wait(&full);
@@ -78,6 +79,17 @@ int main(int argc, char* argv[]) {
 
     num_producers = atoi(argv[1]);
     num_consumers = atoi(argv[2]);
+    
+    int producer_tasks[num_producers];
+    int consumer_tasks[num_consumers];
+
+    for (int i = 0; i < num_producers; i++) {
+        producer_tasks[i] = (TOTAL_ELEMENTS / num_producers) + (i < (TOTAL_ELEMENTS % num_producers));
+    }
+
+    for (int i = 0; i < num_consumers; i++) {
+        consumer_tasks[i] = (TOTAL_ELEMENTS / num_consumers) + (i < (TOTAL_ELEMENTS % num_consumers));
+    }
 
     // int num_producers = NUM_PRODUCERS;
     // int num_consumers = NUM_CONSUMERS;
@@ -93,14 +105,14 @@ int main(int argc, char* argv[]) {
     int err;
 
     for (int i = 0; i < num_producers; i++) {
-        err = pthread_create(&producers[i], NULL, producer, NULL);
+        err = pthread_create(&producers[i], NULL, producer, &producer_tasks[i]);
         if(err!=0){
             return 1;
         }
     }
 
     for (int i = 0; i < num_consumers; i++) {
-        err = pthread_create(&consumers[i], NULL, consumer, NULL);
+        err = pthread_create(&consumers[i], NULL, consumer, &consumer_tasks[i]);
         if(err!=0){
             return 1;
         }

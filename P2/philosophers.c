@@ -3,7 +3,7 @@
 #include <stdlib.h>
 #include <unistd.h>
 
-#define NUM_CYCLES 10
+#define NUM_CYCLES 10000000
 #define NUM_PHILOSOPHERS 5
 
 volatile int *forks;
