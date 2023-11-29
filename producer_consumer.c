@@ -21,14 +21,12 @@ sem_t full;
 
 int insert_item(int item) {
     buffer[produce_ptr] = item;
-    printf("Producer produced item %d at position %d \n", item, produce_ptr);
     produce_ptr = (produce_ptr + 1) % BUFFER_SIZE;
     return 0;
 }
 
 int remove_item(int *item) {
     *item = buffer[consume_ptr];
-    printf("Consumer consumed item %d from position %d \n", *item, consume_ptr);
     consume_ptr = (consume_ptr + 1) % BUFFER_SIZE;
     return 0;
 }
@@ -95,7 +93,6 @@ int main(int argc, char* argv[]) {
     for (int i = 0; i < num_producers; i++) {
         err = pthread_create(&producers[i], NULL, producer, NULL);
         if(err!=0){
-            perror("pthread_create producers");
             return 1;
         }
     }
@@ -103,7 +100,6 @@ int main(int argc, char* argv[]) {
     for (int i = 0; i < num_consumers; i++) {
         err = pthread_create(&consumers[i], NULL, consumer, NULL);
         if(err!=0){
-            perror("pthread_create consumer");
             return 1;
         }
     }
@@ -111,7 +107,6 @@ int main(int argc, char* argv[]) {
     for (int i = 0; i < num_producers; i++) {
         err = pthread_join(producers[i], NULL);
         if(err!=0){
-            perror("pthread_join producer");
             return 1;
         }
     }
@@ -119,7 +114,6 @@ int main(int argc, char* argv[]) {
     for (int i = 0; i < num_consumers; i++) {
         err = pthread_join(consumers[i], NULL);
         if(err!=0){
-            perror("pthread_join consumer");
             return 1;
         }
     }

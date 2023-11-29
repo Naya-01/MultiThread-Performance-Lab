@@ -22,12 +22,10 @@ int writecount = 0;
 
 void read_database()
 {
-    printf("Lecteur %ld lit la base de données\n", pthread_self());
 }
 
 void write_database()
 {
-    printf("Écrivain %ld écrit dans la base de données\n", pthread_self());
 }
 
 void *writer(void *arg)
@@ -118,7 +116,6 @@ int main(int argc, char const *argv[])
     {
         err = pthread_create(&threads_ecrivains[i], NULL, writer, NULL);
         if(err!=0){
-            perror("pthread_create producers");
             return 1;
         }
     }
@@ -126,7 +123,6 @@ int main(int argc, char const *argv[])
     {
         err = pthread_create(&threads_lecteurs[i], NULL, reader, NULL);
         if(err!=0){
-            perror("pthread_create producers");
             return 1;
         }
     }
@@ -135,7 +131,6 @@ int main(int argc, char const *argv[])
     {
         err = pthread_join(threads_ecrivains[i], NULL);
         if(err!=0){
-            perror("pthread_create producers");
             return 1;
         }
     }
@@ -143,7 +138,6 @@ int main(int argc, char const *argv[])
     {
         err = pthread_join(threads_lecteurs[i], NULL);
         if(err!=0){
-            perror("pthread_create producers");
             return 1;
         }
     }
