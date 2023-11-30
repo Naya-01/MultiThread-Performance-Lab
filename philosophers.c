@@ -26,7 +26,6 @@ void lock(int fork) {
             :
         );
     } while (prev_value == 1);
-    printf("no mutex  \n");
 }
 
 void unlock(int fork) {
@@ -41,7 +40,6 @@ void unlock(int fork) {
 
 void lock_forks(int first_fork, int second_fork) {
     #ifdef MUTEX
-    printf("mutex \n");
     pthread_mutex_lock(&forks[first_fork]);
     pthread_mutex_lock(&forks[second_fork]);
     #else
