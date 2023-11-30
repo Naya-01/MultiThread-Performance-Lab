@@ -16,9 +16,37 @@ int consume_ptr = 0;
 int num_producers;
 int num_consumers;
 
+#ifdef MUTEX
 pthread_mutex_t mutex;
+#else
+volatile int mutex = 0;
+#endif
 sem_t empty;
 sem_t full;
+
+
+#ifndef MUTEX
+void lock() {
+    int prev_value;
+    do {
+        __asm__ __volatile__(
+            "xchg %0, %1\n\t"
+            : "=r"(prev_value), "+m"(mutex)
+            : "0"(1)
+            :
+        );
+    } while (prev_value == 1);
+}
+
+void unlock() {
+    __asm__ __volatile__(
+        "movl $0, %0\n\t"
+        : "+m"(mutex)
+        :
+        :
+    );
+}
+#endif
 
 int insert_item(int item) {
     buffer[produce_ptr] = item;
@@ -42,12 +70,21 @@ void* producer(void* arg) {
         for (int i = 0; i < 10000; i++);
 
         sem_wait(&empty);
+        #ifdef MUTEX
         pthread_mutex_lock(&mutex);
+        #else
+        lock();
+        #endif
 
         insert_item(item);
         count++;
 
+        #ifdef MUTEX
         pthread_mutex_unlock(&mutex);
+        #else
+        unlock();
+        #endif
+
         sem_post(&full);
     }
     return NULL;
@@ -61,12 +98,21 @@ void* consumer(void* arg) {
         for (int i = 0; i < 10000; i++);
 
         sem_wait(&full);
+        #ifdef MUTEX
         pthread_mutex_lock(&mutex);
+        #else
+        lock();
+        #endif
 
         remove_item(&item);
         count++;
 
+        #ifdef MUTEX
         pthread_mutex_unlock(&mutex);
+        #else
+        unlock();
+        #endif
+
         sem_post(&empty);
     }
     return NULL;
@@ -97,7 +143,11 @@ int main(int argc, char* argv[]) {
     pthread_t producers[num_producers];
     pthread_t consumers[num_consumers];
 
+    #ifdef MUTEX
     pthread_mutex_init(&mutex, NULL);
+    #else
+    mutex = 0;
+    #endif
     sem_init(&empty, 0, N);
     sem_init(&full, 0, 0);
 
@@ -132,7 +182,10 @@ int main(int argc, char* argv[]) {
         }
     }
 
+    #ifdef MUTEX
     pthread_mutex_destroy(&mutex);
+    #endif
+
     sem_destroy(&empty);
     sem_destroy(&full);
 
