@@ -8,6 +8,7 @@
 volatile int shared_lock = 0;
 int num_thread;
 void lock() {
+    while (shared_lock==1){}; // Test-test-and-set 
     int prev_value;
     do {
         __asm__ __volatile__(
