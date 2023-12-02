@@ -8,7 +8,9 @@
 volatile int shared_lock = 0;
 int num_thread;
 void lock() {
+    #ifdef TATAS
     while (shared_lock==1){}; // Test-test-and-set 
+    #endif
     int prev_value;
     do {
         __asm__ __volatile__(
