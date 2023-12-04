@@ -1,18 +1,18 @@
 #ifndef _MYSEMAPHORE_H_
 #define _MYSEMAPHORE_H_
 
-struct my_semaphore
-{
-   int val;
-};
+typedef struct {
+    volatile int val;
+    volatile int lock;
+} my_semaphore;
 
-int sem_init(struct my_semaphore *sem, int init_value);
+int sem_init(my_semaphore *sem, int init_value);
 
-int sem_destroy(struct my_semaphore *sem);
+int sem_destroy(my_semaphore *sem);
 
-int sem_wait(struct my_semaphore *sem);
+int sem_wait(my_semaphore *sem);
 
-int sem_post(struct my_semaphore *sem);
+int sem_post(my_semaphore *sem);
 
 
 #endif
