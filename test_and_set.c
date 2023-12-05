@@ -2,34 +2,12 @@
 #include <pthread.h>
 #include <stdlib.h>
 
+#include "verrou.h"
 
 #define LOOPS 6400
 
 volatile int shared_lock = 0;
 int num_thread;
-void lock() {
-    #ifdef TATAS
-    while (shared_lock==1){}; // Test-test-and-set 
-    #endif
-    int prev_value;
-    do {
-        __asm__ __volatile__(
-            "xchg %0, %1\n\t"
-            : "=r"(prev_value), "+m"(shared_lock)
-            : "0"(1)
-            :
-        );
-    } while (prev_value == 1);
-}
-
-void unlock() {
-    __asm__ __volatile__(
-        "movl $0, %0\n\t"
-        : "+m"(shared_lock)
-        :
-        :
-    );
-}
 
 void section_crique()
 {
@@ -40,9 +18,9 @@ void *thread_code(void *arg){
     int num_thread = *((int *) arg); 
     for (int i = 0; i < LOOPS/num_thread; i++)
     {
-        lock();
+        lock(&shared_lock);
         section_crique();
-        unlock();
+        unlock(&shared_lock);
     }
 }
 
