@@ -10,44 +10,29 @@
 #define NB_READER 1
 #define NB_WRITER 10
 
-#ifdef MUTEX
+#ifndef POSIX
+#include "verrou.h"
+#include "mysemaphore.h"
+#endif
+
+#ifdef POSIX
 pthread_mutex_t mutex; // mutex lecteur
 pthread_mutex_t ecrivain;
 pthread_mutex_t bReader; // bloque les reader
+
+sem_t db; // accès à la db
+sem_t rsem;
 #else
 volatile int mutex = 0;
 volatile int ecrivain = 0;
 volatile int bReader = 0;
-#endif
 
-sem_t db; // accès à la db
-sem_t rsem;
+my_semaphore* db;
+my_semaphore* rsem;
+#endif
 
 int readcount = 0; // nombre de readers
 int writecount = 0;
-
-#ifndef MUTEX
-void lock(volatile int *var) {
-    int prev_value;
-    do {
-        __asm__ __volatile__(
-            "xchg %0, %1\n\t"
-            : "=r"(prev_value), "+m"(*var)
-            : "0"(1)
-            :
-        );
-    } while (prev_value == 1);
-}
-
-void unlock(volatile int *var) {
-    __asm__ __volatile__(
-        "movl $0, %0\n\t"
-        : "+m"(*var)
-        :
-        :
-    );
-}
-#endif
 
 void read_database()
 {
@@ -61,7 +46,7 @@ void *writer(void *arg)
 {
     for (int i = 0; i < WRITING; i++)
     {
-        #ifdef MUTEX
+        #ifdef POSIX
         pthread_mutex_lock(&ecrivain);
         #else
         lock(&ecrivain);
@@ -70,32 +55,43 @@ void *writer(void *arg)
         writecount++;
         if (writecount == 1)
         {
+            #ifdef POSIX
             sem_wait(&rsem);
+            #else
+            wait(rsem);
+            #endif
         }
 
-        #ifdef MUTEX
+        #ifdef POSIX
         pthread_mutex_unlock(&ecrivain);
-        #else
-        unlock(&ecrivain);
-        #endif
 
         sem_wait(&db);
         write_database();
         sem_post(&db);
 
-        #ifdef MUTEX
         pthread_mutex_lock(&ecrivain);
         #else
+        unlock(&ecrivain);
+
+        wait(db);
+        write_database();
+        post(db);
+
         lock(&ecrivain);
         #endif
+
         writecount--;
 
         if (writecount == 0)
         {
+            #ifdef POSIX
             sem_post(&rsem);
+            #else
+            post(rsem);
+            #endif
         }
 
-        #ifdef MUTEX
+        #ifdef POSIX
         pthread_mutex_unlock(&ecrivain);
         #else
         unlock(&ecrivain);
@@ -108,15 +104,17 @@ void *reader(void *arg)
 {
     for (int i = 0; i < READING; i++)
     {
-        #ifdef MUTEX
+        #ifdef POSIX
         pthread_mutex_lock(&bReader);
-        #else
-        lock(&bReader);
-        #endif
 
         sem_wait(&rsem);
+        #else
+        lock(&bReader);
 
-        #ifdef MUTEX
+        wait(rsem);
+        #endif
+
+        #ifdef POSIX
         pthread_mutex_lock(&mutex);
         #else
         lock(&mutex);
@@ -125,26 +123,30 @@ void *reader(void *arg)
         readcount++;
         if (readcount == 1)
         {
+            #ifdef POSIX
             sem_wait(&db);
+            #else
+            wait(db);
+            #endif
         }
 
-        #ifdef MUTEX
+        #ifdef POSIX
         pthread_mutex_unlock(&mutex);
-        #else
-        unlock(&mutex);
-        #endif
-        
+
         sem_post(&rsem);
 
-        #ifdef MUTEX
         pthread_mutex_unlock(&bReader);
         #else
+        unlock(&mutex);
+
+        post(rsem);
+
         unlock(&bReader);
         #endif
         
         read_database();
 
-        #ifdef MUTEX
+        #ifdef POSIX
         pthread_mutex_lock(&mutex);
         #else
         lock(&mutex);
@@ -153,10 +155,14 @@ void *reader(void *arg)
         readcount--;
         if (readcount == 0)
         {
+            #ifdef POSIX
             sem_post(&db);
+            #else
+            post(db);
+            #endif
         }
 
-        #ifdef MUTEX
+        #ifdef POSIX
         pthread_mutex_unlock(&mutex);
         #else
         unlock(&mutex);
@@ -177,16 +183,21 @@ int main(int argc, char const *argv[])
     // int nb_ecrivains = NB_WRITER;
     // int nb_lecteurs = NB_READER;
 
-    #ifdef MUTEX
+    #ifdef POSIX
     pthread_mutex_init(&mutex, NULL);
     pthread_mutex_init(&ecrivain, NULL);
     pthread_mutex_init(&bReader, NULL);
-    #else
-    mutex = 0;
-    #endif
 
     sem_init(&db, 0, 1);
     sem_init(&rsem, 0, 1);
+    #else
+    mutex = 0;
+
+    db = (my_semaphore*) malloc(sizeof (my_semaphore));
+    rsem = (my_semaphore*) malloc(sizeof (my_semaphore));
+    init(db, 1);
+    init(rsem, 1);
+    #endif
 
     pthread_t threads_ecrivains[nb_ecrivains];
     pthread_t threads_lecteurs[nb_lecteurs];
@@ -223,14 +234,17 @@ int main(int argc, char const *argv[])
         }
     }
 
-    #ifdef MUTEX
+    #ifdef POSIX
     pthread_mutex_destroy(&mutex);
     pthread_mutex_destroy(&ecrivain);
     pthread_mutex_destroy(&bReader);
-    #endif
-    
+
     sem_destroy(&db);
     sem_destroy(&rsem);
+    #else
+    destroy(db);
+    destroy(rsem);
+    #endif
 
     return 0;
 }
