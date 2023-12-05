@@ -4,11 +4,11 @@
 #include "verrou.h"
 
 void lock(volatile int *var) {
-    #ifdef TATAS
-    while (*var==1){}; // Test-test-and-set 
-    #endif
     int prev_value;
     do {
+        #ifdef TATAS
+        while (*var==1){}; // Test-and-test-and-set (spin)
+        #endif
         __asm__ __volatile__(
             "xchg %0, %1\n\t"
             : "=r"(prev_value), "+m"(*var)
