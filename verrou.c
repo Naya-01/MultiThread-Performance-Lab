@@ -4,6 +4,9 @@
 #include "verrou.h"
 
 void lock(volatile int *var) {
+    #ifdef TATAS
+    while (*var==1){}; // Test-test-and-set 
+    #endif
     int prev_value;
     do {
         __asm__ __volatile__(
