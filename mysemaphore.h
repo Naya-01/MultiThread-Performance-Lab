@@ -6,13 +6,13 @@ typedef struct {
     volatile int lock;
 } my_semaphore;
 
-int sem_init(my_semaphore *sem, int init_value);
+int init(my_semaphore *sem, int init_value);
 
-int sem_destroy(my_semaphore *sem);
+int destroy(my_semaphore *sem);
 
-int sem_wait(my_semaphore *sem);
+int wait(my_semaphore *sem);
 
-int sem_post(my_semaphore *sem);
+int post(my_semaphore *sem);
 
 
 #endif

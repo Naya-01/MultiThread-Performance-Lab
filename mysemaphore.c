@@ -6,25 +6,25 @@
 
 volatile int shared_lock = 0;
 
-int sem_init(my_semaphore *sem, int init_value) {
+int init(my_semaphore *sem, int init_value) {
     if (sem == NULL) return -1;
     sem->val = init_value;
     sem->lock = 0; 
     return 0;
 }
 
-int sem_destroy(my_semaphore *sem){
+int destroy(my_semaphore *sem){
     free(sem);
 }
 
-int sem_wait(my_semaphore *sem){
+int wait(my_semaphore *sem){
     lock(&sem->lock);
     if (sem->val > 0)   sem->val--;
     unlock(&sem->lock);
     return 0;
 }
 
-int sem_post(my_semaphore *sem){
+int post(my_semaphore *sem){
     if(sem->val <= 0) return -1;
     lock(&sem->lock);
     sem->val++;
