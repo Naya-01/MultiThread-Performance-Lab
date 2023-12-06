@@ -6,7 +6,11 @@
 #define NUM_CYCLES 10000000
 #define NUM_PHILOSOPHERS 5
 
-#ifdef MUTEX
+#ifndef POSIX
+#include "verrou.h"
+#endif
+
+#ifdef POSIX
 pthread_mutex_t *forks;
 #else
 volatile int *forks;
@@ -14,47 +18,23 @@ volatile int *forks;
 
 int num_philosophers;
 
-
-#ifndef MUTEX
-void lock(int fork) {
-    int prev_value;
-    do {
-        __asm__ __volatile__(
-            "xchg %0, %1\n\t"
-            : "=r"(prev_value), "+m"(forks[fork])
-            : "0"(1)
-            :
-        );
-    } while (prev_value == 1);
-}
-
-void unlock(int fork) {
-    __asm__ __volatile__(
-        "movl $0, %0\n\t"
-        : "+m"(forks[fork])
-        :
-        :
-    );
-}
-#endif
-
 void lock_forks(int first_fork, int second_fork) {
-    #ifdef MUTEX
+    #ifdef POSIX
     pthread_mutex_lock(&forks[first_fork]);
     pthread_mutex_lock(&forks[second_fork]);
     #else
-    lock(first_fork);
-    lock(second_fork);
+    lock(&forks[first_fork]);
+    lock(&forks[second_fork]);
     #endif
 }
 
 void unlock_forks(int first_fork, int second_fork) {
-    #ifdef MUTEX
+    #ifdef POSIX
     pthread_mutex_unlock(&forks[second_fork]);
     pthread_mutex_unlock(&forks[first_fork]);
     #else
-    unlock(second_fork);
-    unlock(first_fork);
+    unlock(&forks[second_fork]);
+    unlock(&forks[first_fork]);
     #endif
 }
 
@@ -90,7 +70,7 @@ int main(int argc, char *argv[]) {
     pthread_t threads[num_philosophers];
     int philosopher_numbers[num_philosophers];
 
-    #ifdef MUTEX
+    #ifdef POSIX
     forks = malloc(num_philosophers * sizeof(pthread_mutex_t));
     #else
     forks = malloc(num_philosophers * sizeof(int));
@@ -102,7 +82,7 @@ int main(int argc, char *argv[]) {
 
     int err;
 
-    #ifdef MUTEX
+    #ifdef POSIX
     // Initialiser les mutex
     for (int i = 0; i < num_philosophers; i++) {
         err = pthread_mutex_init(&forks[i], NULL);
@@ -134,7 +114,7 @@ int main(int argc, char *argv[]) {
         
     }
 
-    #ifdef MUTEX
+    #ifdef POSIX
     // Nettoyer les mutex
     for (int i = 0; i < num_philosophers; i++) {
         err = pthread_mutex_destroy(&forks[i]);

@@ -9,12 +9,16 @@ def read_data(filename):
         data = list(reader)
     return np.array(data, dtype=int)
 
-def plot_data(program_name, data):
+def plot_data(program_name, data, data_tatas):
     threads = np.unique(data[:, 0])
     means = [np.mean(data[data[:, 0] == t, 1]) for t in threads]
     std_devs = [np.std(data[data[:, 0] == t, 1]) for t in threads]
+    means_tatas = [np.mean(data_tatas[data_tatas[:, 0] == t, 1]) for t in threads]
+    std_devs_tatas = [np.std(data_tatas[data_tatas[:, 0] == t, 1]) for t in threads]
 
-    plt.errorbar(threads, means, yerr=std_devs, fmt='o-', capsize=5, label=program_name)
+    plt.errorbar(threads, means, yerr=std_devs, fmt='o-', capsize=5, label=f"{program_name} POSIX")
+    plt.errorbar(threads, means_tatas, yerr=std_devs_tatas, fmt='.-g', capsize=5, label=f"{program_name} TATAS")    
+
     plt.xlabel('Nombre de Threads')
     plt.xscale('log', base=2)
     plt.xticks(threads, threads) 
@@ -26,8 +30,12 @@ def plot_data(program_name, data):
     plt.savefig(f"./plots/{program_name}.pdf")
     plt.close()
 
-
-for program in ["philosophers", "producer_consumer", "writer_reader", "test_and_set"]:
-    data = read_data("./data/" + program + "_performance.csv")
-    plot_data(program, data)
+for program in ["writer_reader", "producer_consumer", "test_and_set","philosophers"]:
+    if "test_and_set" in program:
+        data = read_data("./data/" + program + "_performance.csv")
+        data_tatas = read_data("./data/test_and_" + program + "_performance.csv")
+    else:
+        data = read_data("./data/" + program + "_performance.csv")
+        data_tatas = read_data("./data/" + program + "_tatas_performance.csv")
+    plot_data(program, data, data_tatas)
 

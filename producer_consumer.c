@@ -10,42 +10,27 @@
 #define NUM_CONSUMERS 5
 #define NUM_PRODUCERS 5
 
+#ifndef POSIX
+#include "verrou.h"
+#include "mysemaphore.h"
+#endif
+
 int buffer[BUFFER_SIZE];
 int produce_ptr = 0;
 int consume_ptr = 0;
 int num_producers;
 int num_consumers;
 
-#ifdef MUTEX
+#ifdef POSIX
 pthread_mutex_t mutex;
-#else
-volatile int mutex = 0;
-#endif
+
 sem_t empty;
 sem_t full;
+#else
+volatile int mutex = 0;
 
-
-#ifndef MUTEX
-void lock() {
-    int prev_value;
-    do {
-        __asm__ __volatile__(
-            "xchg %0, %1\n\t"
-            : "=r"(prev_value), "+m"(mutex)
-            : "0"(1)
-            :
-        );
-    } while (prev_value == 1);
-}
-
-void unlock() {
-    __asm__ __volatile__(
-        "movl $0, %0\n\t"
-        : "+m"(mutex)
-        :
-        :
-    );
-}
+my_semaphore* empty;
+my_semaphore* full;
 #endif
 
 int insert_item(int item) {
@@ -69,23 +54,25 @@ void* producer(void* arg) {
 
         for (int i = 0; i < 10000; i++);
 
+        #ifdef POSIX
         sem_wait(&empty);
-        #ifdef MUTEX
         pthread_mutex_lock(&mutex);
         #else
-        lock();
+        wait(empty);
+        lock(&mutex);
         #endif
 
         insert_item(item);
         count++;
 
-        #ifdef MUTEX
+        #ifdef POSIX
         pthread_mutex_unlock(&mutex);
+        sem_post(&full);
         #else
-        unlock();
+        unlock(&mutex);
+        post(full);
         #endif
 
-        sem_post(&full);
     }
     return NULL;
 }
@@ -97,23 +84,25 @@ void* consumer(void* arg) {
     while (count < max_items) {
         for (int i = 0; i < 10000; i++);
 
+        #ifdef POSIX
         sem_wait(&full);
-        #ifdef MUTEX
         pthread_mutex_lock(&mutex);
         #else
-        lock();
+        wait(full);
+        lock(&mutex);
         #endif
 
         remove_item(&item);
         count++;
 
-        #ifdef MUTEX
+        #ifdef POSIX
         pthread_mutex_unlock(&mutex);
+        sem_post(&empty);
         #else
-        unlock();
+        unlock(&mutex);
+        post(empty);
         #endif
 
-        sem_post(&empty);
     }
     return NULL;
 }
@@ -143,14 +132,20 @@ int main(int argc, char* argv[]) {
     pthread_t producers[num_producers];
     pthread_t consumers[num_consumers];
 
-    #ifdef MUTEX
+    #ifdef POSIX
     pthread_mutex_init(&mutex, NULL);
-    #else
-    mutex = 0;
-    #endif
+
     sem_init(&empty, 0, N);
     sem_init(&full, 0, 0);
+    #else
+    mutex = 0;
 
+    empty = (my_semaphore*) malloc(sizeof (my_semaphore));
+    full = (my_semaphore*) malloc(sizeof (my_semaphore));
+
+    init(empty,N);
+    init(full,0);
+    #endif
 
     int err;
 
@@ -182,12 +177,14 @@ int main(int argc, char* argv[]) {
         }
     }
 
-    #ifdef MUTEX
+    #ifdef POSIX
     pthread_mutex_destroy(&mutex);
-    #endif
-
     sem_destroy(&empty);
     sem_destroy(&full);
+    #else
+    destroy(empty);
+    destroy(full);
+    #endif
 
     return 0;
 }

@@ -9,7 +9,7 @@ run_and_measure() {
 
     start_time=$(date +%s%N)
 
-    if [ "$program" == "philosophers" ]; then
+    if [ "$program" == "philosophers" ] || [ "$program" == "philosophers_tatas" ]; then
         ./$program $thread_count > /dev/null 2>&1
     else
         half_thread_count=$(($thread_count / 2))
@@ -22,7 +22,7 @@ run_and_measure() {
     echo "$thread_count, $duration" >> "./data/${program}_performance.csv"
 }
 
-for program in "philosophers" "producer_consumer" "writer_reader"; do
+for program in "writer_reader" "writer_reader_tatas" "producer_consumer" "producer_consumer_tatas" "philosophers" "philosophers_tatas"; do
     echo "threads, duration_ms" > "./data/${program}_performance.csv"
     for count in "${thread_counts[@]}"; do
         for i in {1..5}; do
@@ -31,5 +31,7 @@ for program in "philosophers" "producer_consumer" "writer_reader"; do
     done
     #cat "./data/${program}_performance.csv"
 done
+
+bash ./test_and_set.sh
 
 python3 "plots.py"
