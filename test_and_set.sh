@@ -17,14 +17,12 @@ run_and_measure() {
     echo "$thread_count, $duration" >> "./data/${program}_performance.csv"
 }
 
-program="test_and_set"
-echo "threads, duration_ms" > "./data/${program}_performance.csv"
-for count in "${thread_counts[@]}"; do
-    for i in {1..5}; do
-        run_and_measure $program $count
+for program in "test_and_set" "test_and_test_and_set"; do
+    echo "threads, duration_ms" > "./data/${program}_performance.csv"
+    for count in "${thread_counts[@]}"; do
+        for i in {1..5}; do
+            run_and_measure $program $count
+        done
     done
+    #cat "./data/${program}_performance.csv"
 done
-cat "./data/${program}_performance.csv"
-
-
-python3 "plots.py"

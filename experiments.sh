@@ -22,7 +22,7 @@ run_and_measure() {
     echo "$thread_count, $duration" >> "./data/${program}_performance.csv"
 }
 
-for program in "philosophers" "producer_consumer" "writer_reader"; do
+for program in "philosophers" "producer_consumer" "writer_reader" "philosophers_tatas" "producer_consumer_tatas" "writer_reader_tatas"; do
     echo "threads, duration_ms" > "./data/${program}_performance.csv"
     for count in "${thread_counts[@]}"; do
         for i in {1..5}; do
@@ -31,5 +31,7 @@ for program in "philosophers" "producer_consumer" "writer_reader"; do
     done
     #cat "./data/${program}_performance.csv"
 done
+
+bash ./test_and_set.sh
 
 python3 "plots.py"
