@@ -3,7 +3,9 @@ Programmation multi-threadée et évaluation de performances
 
 ## First Time   
 
-``make``
+```bash 
+make build
+```
 
 python3 -m venv ./.venv
 
@@ -15,11 +17,15 @@ pip install matplotlib
 
 ## Run perf
 
-`./experiments.sh`
-
+```bash 
+./experiments.sh
+```
 
 ### For plots
 
-`python3 plots.py`
+```bash 
+python3 plots.py
+```
+
 
 

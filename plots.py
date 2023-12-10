@@ -17,12 +17,12 @@ def plot_data(program_name, data, data_tatas):
     std_devs_tatas = [np.std(data_tatas[data_tatas[:, 0] == t, 1]) for t in threads]
 
     if "test_and_set" in program_name:
-        plt.errorbar(threads, means, yerr=std_devs, fmt='o-', capsize=5, label="Test-And-Set")
-        plt.errorbar(threads, means_tatas, yerr=std_devs_tatas, fmt='.-r', capsize=5, label="Test-And-Test-And-Set")   
+        plt.errorbar(threads, means, yerr=std_devs, fmt='o', capsize=5, label="Test-And-Set")
+        plt.errorbar(threads, means_tatas, yerr=std_devs_tatas, fmt='.r', capsize=5, label="Test-And-Test-And-Set")   
         plt.title('Performance du verrou') 
     else:
-        plt.errorbar(threads, means, yerr=std_devs, fmt='o-', capsize=5, label=f"{program_name} POSIX")
-        plt.errorbar(threads, means_tatas, yerr=std_devs_tatas, fmt='.-r', capsize=5, label=f"{program_name} TATAS")
+        plt.errorbar(threads, means, yerr=std_devs, fmt='o', capsize=5, label=f"{program_name} POSIX")
+        plt.errorbar(threads, means_tatas, yerr=std_devs_tatas, fmt='.r', capsize=5, label=f"{program_name} TATAS")
         plt.title('Performance de ' + program_name)
     
     plt.xlabel('Nombre de Threads')
