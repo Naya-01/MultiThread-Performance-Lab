@@ -17,7 +17,15 @@ pip install matplotlib
 
 ## Run perf
 
+### via makefile :
+
 ```bash 
+make test
+```
+
+### via bash:
+```bash 
+make build
 ./experiments.sh
 ```
 
