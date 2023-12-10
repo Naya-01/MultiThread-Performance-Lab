@@ -31,6 +31,11 @@ verrou_tatas.o: verrou.c
 mysemaphore.o: mysemaphore.c
 	$(CC) $(CFLAGS) -c mysemaphore.c -o mysemaphore.o 
 
+test:
+	make clean
+	make build
+	./experiments.sh
+
 clean:
-	rm -f test_and_set verrou.o verrou_tatas.o
+	rm -f test_and_set mysemaphore.o verrou.o verrou_tatas.o writer_reader_tatas writer_reader test_and_test_and_set producer_consumer_tatas producer_consumer philosophers_tatas philosophers
 
